@@ -1,0 +1,1 @@
+DEBUG=communicator:* npm start
