@@ -211,6 +211,11 @@ export default {
       console.log('this method was fired by the socket server. eg: io.emit("customEmit", data)');
       this.ws_socketMessage = data;
     },
+    temperatureChange: function (data) {
+      this.temp = data.payload.value.toFixed(2);
+      console.log('TemperatureChange Event (temp: ' + this.temp + ')');
+
+    },
     temperature: function (data) {
       this.temp = data.payload.temperature.toFixed(1);
       this.hum = data.payload.humidity.toFixed(1);

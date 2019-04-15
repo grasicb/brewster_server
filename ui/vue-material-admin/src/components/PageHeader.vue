@@ -7,16 +7,19 @@
 
     </v-breadcrumbs>
     <v-spacer></v-spacer>
+    
     <div class="page-header-right">
-      <v-btn icon>
+      <v-btn icon v-on:click="notify">
         <v-icon class="text--secondary">refresh</v-icon>
       </v-btn>
     </div>
+    
   </v-layout>  
 </template>
 
 <script>
 import menu from '@/api/menu';
+
 export default {
   data () {
     return {
@@ -45,6 +48,11 @@ export default {
       });
       return breadcrumbs;
     },    
+  },
+  methods: {
+    notify: function (event) {
+      window.getApp.$emit('COMPONENT_REFRESH');
+    }
   }
 };
 </script>

@@ -7,7 +7,7 @@ let client = null;
 const io = require('socket.io')(8082);
 
 io.on('connection', function(socket) {
-    console.log('WS: ' + socket.id)
+    console.log('WebSocket connected: ' + socket.id)
     socket.on('SEND_MESSAGE', function(data) {
       console.log('WS SEND_MESSAGE: ' + data);
       io.emit('MESSAGE', data)
@@ -30,6 +30,7 @@ io.on('connection', function(socket) {
 });
 
 module.exports.broadcastEvent = function(event) {
+  console.log('WS broadcasting event: ' + event.event + ', ' + JSON.stringify(event.payload));
   io.emit(event.event, event);
 };
 

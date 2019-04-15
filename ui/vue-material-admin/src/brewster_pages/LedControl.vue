@@ -44,6 +44,39 @@
         </v-flex>
 
         <v-flex lg3 sm6 xs12>
+          <v-layout column>
+            <v-flex d-flex>
+              <mini-statistic
+                icon="fa fa-thermometer-full"
+                :title="temperature"
+                sub-title="Kabinet"
+                color="light-blue"      
+              >
+              </mini-statistic>
+            </v-flex>
+
+            <v-flex d-flex>
+              <temperature-widget
+                :temperature="temp_c_out"
+                location="Cooler"
+                color="light-blue" 
+              >
+              </temperature-widget>
+            </v-flex>
+
+            <v-flex d-flex>
+              <temperature-widget
+                :temperature="temp_c_out"
+                location="Mash tun"
+                color="light-blue" 
+              >
+              </temperature-widget>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+
+
+        <v-flex lg3 sm6 xs12>
           <mini-statistic
             icon="fa fa-thermometer-full"
             :title="temperature"
@@ -51,7 +84,27 @@
             color="light-blue"      
           >
           </mini-statistic>
-        </v-flex> 
+        </v-flex>
+        
+        <v-flex lg3 sm6 xs12>
+          <mini-statistic
+            icon="fa fa-thermometer-full"
+            :title="temp_c_out"
+            sub-title="Chiller out"
+            color="light-blue"      
+          >
+          </mini-statistic>
+        </v-flex>
+
+        <v-flex lg3 sm6 xs12>
+          <temperature-widget
+            :temperature="temp_c_out"
+            location="Cooler"
+            color="light-blue" 
+          >
+          </temperature-widget>
+        </v-flex>
+        
 
         <!--
         <v-flex lg3 >
@@ -84,13 +137,15 @@ import VWidget from '@/components/VWidget';
 import CircleWidget from '@/brewster_components/widgets/CircleWidget';
 import LinearWidget from '@/brewster_components/widgets/LinearWidget';
 import MiniStatistic from '@/brewster_components/widgets/MiniStatistic';
+import TemperatureWidget from '@/brewster_components/widgets/TemperatureWidget';
 
 export default {
   components: {
     VWidget,
     CircleWidget,
     LinearWidget,
-    MiniStatistic
+    MiniStatistic,
+    TemperatureWidget
   },
   data () {
     return {
@@ -99,7 +154,8 @@ export default {
       led_intensity: 70,
       api_info: 'null',
       humidity: 0,
-      tmperature: 0
+      tmperature: 0,
+      temp_c_out: 0
     };
   },
   computed: {
@@ -122,7 +178,12 @@ export default {
     temperature: function (data) {
       this.temperature = data.payload.temperature.toFixed(1);
       this.humidity = data.payload.humidity.toFixed(1);
-      console.log('Temperature Event-1 (temp: ' + this.temperature + ', hum: ' + this.humidity + ')');
+      // console.log('Temperature Event-1 (temp: ' + this.temperature + ', hum: ' + this.humidity + ')');
+    },
+    temperatureChange: function (data) {
+      if (data.payload.id === 'C-OUT') {
+        this.temp_c_out = data.payload.value.toFixed(1);
+      }
     }
   },
   methods: {

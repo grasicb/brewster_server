@@ -11,16 +11,20 @@
             <router-view></router-view>
           </div>
            <!-- App Footer -->
+           <!-- 
           <v-footer height="auto" class="white pa-3 app--footer">
             <span class="caption">Brewster Web Control Panel</span>
           </v-footer>
+          -->
         </v-content>
         <!-- Go to top -->
         <app-fab></app-fab>
         <!-- theme setting -->
+        <!-- 
         <v-btn small fab dark falt fixed top="top" right="right" class="setting-fab" color="red" @click="openThemeSettings">
           <v-icon>settings</v-icon>
         </v-btn>
+        
         <v-navigation-drawer
           class="setting-drawer"
           temporary
@@ -31,6 +35,7 @@
           >
           <theme-settings></theme-settings>
         </v-navigation-drawer>
+        -->
       </v-app>
     </template>
     <template v-else>
@@ -55,6 +60,7 @@
   </div>
 </template>
 <script>
+
 import AppDrawer from '@/components/AppDrawer';
 import AppToolbar from '@/components/AppToolbar';
 import AppFab from '@/components/AppFab';

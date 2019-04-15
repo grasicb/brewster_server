@@ -62,13 +62,13 @@ export default [
     meta: { },
     name: 'Root',
     redirect: {
-      name: 'Test'
+      name: 'Dashboard'
     }
   },
   {
-    path: '/dashboard',
+    path: '/dashboard1',
     meta: { breadcrumb: true },
-    name: 'Dashboard',
+    name: 'Dashboard1',
     component: () => import(
       /* webpackChunkName: "routes" */
       /* webpackMode: "lazy-once" */
@@ -613,6 +613,14 @@ export default [
     name: 'LedControl',
     component: () => import(
       `@/brewster_pages/LedControl.vue`
+    )
+  },
+  {
+    path: '/dashboard',
+    meta: { breadcrumb: true },
+    name: 'Dashboard',
+    component: () => import(
+      `@/brewster_pages/Dashboard.vue`
     )
   },
 ];
