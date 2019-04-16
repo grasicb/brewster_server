@@ -88,9 +88,10 @@
 
 <script>
 import axios from 'axios';
+import { mapState } from 'vuex';
+import { stringify } from 'querystring';
 import TemperatureWidget from '@/brewster_components/widgets/TemperatureWidget';
 import OutputWidget from '@/brewster_components/widgets/OutputWidget';
-import { stringify } from 'querystring';
 
 export default {
   components: {
@@ -100,15 +101,15 @@ export default {
   },
   data () {
     return {
-      // interval: {},
-      temp_c_out: '',
-      temp_bk: '',
-      temp_mt: '',
-      temp_hlt: '',
-      api_info: '.'
     };
   },
   computed: {
+    ...mapState({
+      temp_hlt: state => state.sensors.t_HLT,
+      temp_mt: state => state.sensors.t_MT,
+      temp_bk: state => state.sensors.t_BK,
+      temp_c_out: state => state.sensors.t_C_OUT,
+    })
   },
   created () {
     window.getApp.$on('COMPONENT_REFRESH', () => {
@@ -129,18 +130,8 @@ export default {
   },
   sockets: {
     temperatureChange: function (data) {
-      if (data.payload.id === 'C-OUT') {
-        this.temp_c_out = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'HLT') {
-        this.temp_hlt = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'MT') {
-        this.temp_mt = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'BK') {
-        this.temp_bk = data.payload.value.toFixed(1);
-      }
+      // updateTemperature(data);
+      this.$store.commit('sensors/updateTemperature', data);
     },
     outputChange: function (data) {
       console.log('Output change: ' + stringify(data.payload));

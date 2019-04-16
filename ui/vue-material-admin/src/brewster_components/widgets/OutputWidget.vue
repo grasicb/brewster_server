@@ -7,7 +7,7 @@
             <v-toolbar-side-icon @click="is_hidden=!is_hidden" ></v-toolbar-side-icon>
             <div class="title" >{{ title }}</div>
             <v-spacer></v-spacer>
-            <div class="title" >{{ is_pwm_enabled?current_sensor_value+'°':power+' %' }}</div>
+            <div class="title" >{{ is_pwm_enabled?getTemperature(selected_sensor)+'°':power+' %' }}</div>
             <div class="subheading" v-if="is_pwm_enabled">&nbsp;({{ target_value }}°)</div>
 
             
@@ -83,6 +83,7 @@
 </template>
 
 <script>
+import { mapState, mapGetters } from 'vuex';
 import { stringify } from 'querystring';
 
 export default {
@@ -118,10 +119,14 @@ export default {
         { title: 'Mash Tun', key: 'MT' },
         { title: 'Boil Kettle', key: 'BK' },
         { title: 'Flow Sensor', key: 'C-OUT' }
-      ]
+      ],
+      selected_sensor: ''
     };
   },
   computed: {
+    ...mapGetters({
+      getTemperature: 'sensors/getTemperature'
+    })
   },
   sockets: {
     temperatureChange: function (data) {
@@ -146,6 +151,7 @@ export default {
     dialog_save_changes () {
       this.target_sensor = this.target_sensor_dialog;
       this.is_pwm_enabled = this.is_pwm_enabled_dialog;
+      this.selected_sensor = this.target_sensor_dialog;
       this.dialog = false;
       console.warn('Implementation missing - fulfillment');
     },
