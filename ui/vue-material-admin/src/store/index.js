@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import sensors from './modules/sensors';
+import outputs from './modules/outputs';
 // import createLogger from '../../../src/plugins/logger';
 
 Vue.use(Vuex);
@@ -9,7 +10,8 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   modules: {
-    sensors
+    sensors,
+    outputs
   },
 //  plugins: debug ? [createLogger()] : []
 });

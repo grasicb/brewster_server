@@ -25,14 +25,13 @@ router.get('/output/:oID', function(req, res, next) {
   res.send('Output ' + req.params.oID+'<br/>To be implemented');
 });
 
-// POST request for changing output mode of an output
-router.post('/output/:oID/mode', function(req, res, next) {
-  res.send('Output change mode' + req.params.oID+'<br/>To be implemented');
-});
+// POST request for changing output value/target temperature
+router.post('/output/:oID', brewster_controller.setOutput);
 
-// POST request for changing output value of an output
-router.post('/output/:oID/targetValue', function(req, res, next) {
-  res.send('Output change target value' + req.params.oID+'<br/>To be implemented');
-});
+// POST request for changing output mode of an output
+router.post('/output/:oID/mode', brewster_controller.setOutputMode);
+
+// POST request for changing output mode of an output
+router.post('/output/:oID/power', brewster_controller.setPower);
 
 module.exports = router;

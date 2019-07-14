@@ -7,29 +7,29 @@
             <v-toolbar-side-icon @click="is_hidden=!is_hidden" ></v-toolbar-side-icon>
             <div class="title" >{{ title }}</div>
             <v-spacer></v-spacer>
-            <div class="title" >{{ is_pwm_enabled?getTemperature(selected_sensor)+'°':power+' %' }}</div>
-            <div class="subheading" v-if="is_pwm_enabled">&nbsp;({{ target_value }}°)</div>
+            <div class="title" >{{ getOutputState(outputId).isPID?getTemperature(getOutputState(outputId).pidTargetSensor)+'°':getOutputState(outputId).output+' %' }}</div>
+            <div class="subheading" v-if="getOutputState(outputId).isPID">&nbsp;({{ getOutputState(outputId).pidTargetValue }}°)</div>
 
             
             <v-spacer></v-spacer>
             <v-toolbar-items >
               <v-btn icon @click="open_dialog"><v-icon>settings</v-icon></v-btn>              
 
-              <v-btn class="pa-0 ma-0 powerbtn" flat @click="togglePower" :color="is_turned_on?'success':''"><span class="title">{{ is_turned_on?'ON':'OFF' }}</span></v-btn>
+              <v-btn class="pa-0 ma-0 powerbtn" flat @click="togglePower" :color="getOutputState(outputId).isActive?'success':''"><span class="title">{{ getOutputState(outputId).isActive?'ON':'OFF' }}</span></v-btn>
               
             </v-toolbar-items>
         </v-toolbar>
       
       
-      <v-card-text class="pl-3 pr-3 pt-0 pb-0" v-if="is_pwm_enabled && !is_hidden">
+      <v-card-text class="pl-3 pr-3 pt-0 pb-0" v-if="getOutputState(outputId).isPID && !is_hidden">
         <v-container class="pa-0">
           
           <v-slider
-            v-model="target_value" :color="color" always-dirty min="0" max="100" @change="outputChanged">
-            <v-icon slot="prepend" :color="color" @click="(target_value > 1)?target_value = target_value - 1:target_value = 0; outputChanged();">
+            v-model="getOutputState(outputId).pidTargetValue" :color="color" always-dirty min="0" max="100" @change="outputChanged">
+            <v-icon slot="prepend" :color="color" @click="pidDecrease">
               keyboard_arrow_down
             </v-icon>
-            <v-icon slot="append" :color="color" @click="(target_value < 99)?target_value = target_value + 1:target_value = 100; outputChanged();">
+            <v-icon slot="append" :color="color" @click="pidIncrease">
               keyboard_arrow_up
             </v-icon>
           </v-slider>
@@ -40,11 +40,11 @@
       <v-card-text class="pl-3 pr-3 pt-0 pb-0" v-else-if="!is_hidden">
         <v-container class="pa-0">
           <v-slider
-            v-model="power" :color="color" always-dirty min="0" max="100" @change="outputChanged">
-            <v-icon slot="prepend" :color="color" @click="if (power > 5) { power = power + (5-(power%5==0?5:power%5)) - 5;} else {power = 0;} outputChanged();">
+            v-model="getOutputState(outputId).output" :color="color" always-dirty min="0" max="100" @change="outputChanged">
+            <v-icon slot="prepend" :color="color" @click="outputDecrease();">
               keyboard_arrow_down
             </v-icon>
-            <v-icon slot="append" :color="color" @click="if (power < 95) { power = power - (power%5) + 5;} else {power = 100;} outputChanged();">
+            <v-icon slot="append" :color="color" @click="outputIncrease();">
               keyboard_arrow_up
             </v-icon>
           </v-slider>
@@ -83,6 +83,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import { mapState, mapGetters } from 'vuex';
 import { stringify } from 'querystring';
 
@@ -103,91 +104,141 @@ export default {
   data () {
     return {
       is_turned_on: false,
-      power: '0',
-      last_power: 0,
-      is_pwm_enabled: false,
       is_pwm_enabled_dialog: false,
-      current_sensor_value: 64,
-      target_value: 65.4,
-      last_target_value: 0,
-      target_sensor: 'HLT',
       target_sensor_dialog: '',
-      is_hidden: false,
       dialog: false,
       items: [
         { title: 'Hot Liquor Tun', key: 'HLT' },
         { title: 'Mash Tun', key: 'MT' },
         { title: 'Boil Kettle', key: 'BK' },
         { title: 'Flow Sensor', key: 'C-OUT' }
-      ],
-      selected_sensor: ''
+      ]
     };
   },
   computed: {
     ...mapGetters({
       getTemperature: 'sensors/getTemperature'
+    }),
+    ...mapGetters({
+      getOutputState: 'outputs/getOutputState'
     })
-  },
-  sockets: {
-    temperatureChange: function (data) {
-      if (data.payload.id === 'C-OUT') {
-        this.temp_c_out = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'HLT') {
-        this.temp_hlt = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'MT') {
-        this.temp_mt = data.payload.value.toFixed(1);
-      }
-      if (data.payload.id === 'BK') {
-        this.temp_bk = data.payload.value.toFixed(1);
-      }
-    },
-    outputChange: function (data) {
-      console.log('Output change: ' + stringify(data.payload));
-    }
   },
   methods: {
     dialog_save_changes () {
-      this.target_sensor = this.target_sensor_dialog;
-      this.is_pwm_enabled = this.is_pwm_enabled_dialog;
-      this.selected_sensor = this.target_sensor_dialog;
       this.dialog = false;
-      console.warn('Implementation missing - fulfillment');
+
+      if (this.is_pwm_enabled_dialog) {
+        this.outputSetPidMode(this.target_sensor_dialog);
+      } else {
+        this.outputSetManualMode();
+      }
     },
 
     open_dialog () {
-      this.target_sensor_dialog = this.target_sensor;
-      this.is_pwm_enabled_dialog = this.is_pwm_enabled;
+      this.target_sensor_dialog = this.getOutputState(this.outputId).pidTargetSensor;
+      this.is_pwm_enabled_dialog = this.getOutputState(this.outputId).isPID;
       this.dialog = true;
     },
 
     togglePower () {
-      if (this.is_turned_on) {
-        this.last_power = this.power;
-        this.last_target_value = this.target_value;
-        this.power = 0;
-        this.target_value = 0;
-        this.is_turned_on = false;
-
+      if (this.getOutputState(this.outputId).isActive) {
+        this.outputSetPower(false);
       } else {
-        if (this.power === 0) {
-          this.power = this.last_power;
-        }
-
-        if (this.target_value === 0) {
-          this.target_value = this.last_target_value;
-        }
-
-        this.is_turned_on = true;
+        this.outputSetPower(true);
       }
-
-      this.outputChanged();
     },
 
     outputChanged () {
-      console.warn('Implementation missing - fulfillment');
-    }
+      if (!this.getOutputState(this.outputId).isPID) {
+        this.outputSetValue(this.getOutputState(this.outputId).output);
+      } else {
+        this.outputSetTargetTemperature(this.getOutputState(this.outputId).pidTargetValue);
+      }
+    },
+
+    outputIncrease () {
+      let power = this.getOutputState(this.outputId).output;
+
+      if (power < 95) {
+        this.getOutputState(this.outputId).output = power - (power % 5) + 5;
+      } else {
+        this.getOutputState(this.outputId).output = 100;
+      }
+      this.outputChanged();
+    },
+
+    outputDecrease () {
+      let power = this.getOutputState(this.outputId).output;
+
+      if (power > 5) {
+        this.getOutputState(this.outputId).output = power + (5 - (power % 5 === 0 ? 5 : power % 5)) - 5;
+      } else {
+        this.getOutputState(this.outputId).output = 0;
+      }
+      this.outputChanged();
+    },
+
+    pidIncrease () {
+      let power = this.getOutputState(this.outputId).pidTargetValue;
+
+      if (power < 100) {
+        this.getOutputState(this.outputId).pidTargetValue = power + 1;
+      } else {
+        this.getOutputState(this.outputId).pidTargetValue = 100;
+      }
+      this.outputChanged();
+    },
+
+    pidDecrease () {
+      let power = this.getOutputState(this.outputId).pidTargetValue;
+
+      if (power > 0) {
+        this.getOutputState(this.outputId).pidTargetValue = power - 1;
+      } else {
+        this.getOutputState(this.outputId).pidTargetValue = 0;
+      }
+      this.outputChanged();
+    },
+
+    outputSetPower (val) {
+      axios({ method: 'POST', 'url': 'http://192.168.1.27:3000/brewster/output/' + this.outputId + '/power', 'data': { 'value': val }}).then(data => {
+        // this.api_info = data;
+      }, error => {
+        console.error(error);
+      });
+    },
+
+    outputSetValue (val) {
+      axios({ method: 'POST', 'url': 'http://192.168.1.27:3000/brewster/output/' + this.outputId, 'data': { 'output_value': val }}).then(data => {
+        // this.api_info = data;
+      }, error => {
+        console.error(error);
+      }); 
+    },
+
+    outputSetTargetTemperature (val) {
+      axios({ method: 'POST', 'url': 'http://192.168.1.27:3000/brewster/output/' + this.outputId, 'data': { 'target_temperature': val }}).then(data => {
+        // this.api_info = data;
+      }, error => {
+        console.error(error);
+      });
+    },
+
+    outputSetPidMode (targetSensor) {
+      axios({ method: 'POST', 'url': 'http://192.168.1.27:3000/brewster/output/' + this.outputId + '/mode', 'data': { 'mode': 'pid', 'target_sensor': targetSensor }}).then(data => {
+        // this.api_info = data;
+      }, error => {
+        console.error(error);
+      });
+    },
+
+    outputSetManualMode (targetSensor) {
+      axios({ method: 'POST', 'url': 'http://192.168.1.27:3000/brewster/output/' + this.outputId + '/mode', 'data': { 'mode': 'manual' }}).then(data => {
+        // this.api_info = data;
+      }, error => {
+        console.error(error);
+      });
+    },
   }
 };
 </script>

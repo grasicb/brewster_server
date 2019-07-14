@@ -89,7 +89,6 @@
 <script>
 import axios from 'axios';
 import { mapState } from 'vuex';
-import { stringify } from 'querystring';
 import TemperatureWidget from '@/brewster_components/widgets/TemperatureWidget';
 import OutputWidget from '@/brewster_components/widgets/OutputWidget';
 
@@ -127,15 +126,6 @@ export default {
       console.error(error);
     });
     */
-  },
-  sockets: {
-    temperatureChange: function (data) {
-      // updateTemperature(data);
-      this.$store.commit('sensors/updateTemperature', data);
-    },
-    outputChange: function (data) {
-      console.log('Output change: ' + stringify(data.payload));
-    }
   },
   methods: {
     /*

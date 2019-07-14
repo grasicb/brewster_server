@@ -68,6 +68,7 @@ import PageHeader from '@/components/PageHeader';
 import menu from '@/api/menu';
 import ThemeSettings from '@/components/ThemeSettings';
 import AppEvents from  './event';
+
 export default {
   components: {
     AppDrawer,
@@ -102,7 +103,14 @@ export default {
       this.rightDrawer = (!this.rightDrawer);
     }
   },
-
+  sockets: {
+    temperatureChange: function (data) {
+      this.$store.commit('sensors/updateTemperature', data);
+    },
+    outputChange: function (data) {
+      this.$store.commit('outputs/updateOutputs', data);
+    }
+  }
 };
 </script>
 
